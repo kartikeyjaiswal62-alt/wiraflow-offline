@@ -1,0 +1,168 @@
+import type { DesignPageSpec, DesignSpec } from "./types";
+import { generateFlutterPageDart } from "./flutter-codegen";
+
+function dartIdentifierFromKey(key: string): string {
+  const cleaned = String(key || "page").replace(/[^a-zA-Z0-9]+/g, "_");
+  const startsOk = /^[a-zA-Z_]/.test(cleaned) ? cleaned : `p_${cleaned}`;
+  return startsOk || "page";
+}
+
+function pageClassName(page: DesignPageSpec): string {
+  const base = page.name || page.key || "Page";
+  const cleaned = base.replace(/[^a-zA-Z0-9]+/g, " ").trim();
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  const pascal = parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join("");
+  return pascal.endsWith("Page") ? pascal : `${pascal}Page`;
+}
+
+function primaryColorSeed(spec: DesignSpec): string {
+  // Fallback to a pleasant indigo if invalid.
+  const hex = spec.palette?.primary || "#6366F1";
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex);
+  if (!m) return "0xFF6366F1";
+  return `0xFF${m[1].toUpperCase()}`;
+}
+
+export function generateFlutterProjectFiles(
+  spec: DesignSpec,
+  options: { includeSupabase?: boolean } = {},
+): Record<string, string> {
+  const files: Record<string, string> = {};
+  const includeSupabase = options.includeSupabase === true;
+
+  const pageKeys = spec.pages.map((p) => p.key);
+  const firstPage = spec.pages[0];
+
+  let usesFlChart = false;
+  for (const pageKey of pageKeys) {
+    const code = generateFlutterPageDart(spec, pageKey);
+    if (code.includes("fl_chart")) usesFlChart = true;
+    const safeName = dartIdentifierFromKey(pageKey);
+    files[`lib/pages/${safeName}.dart`] = code;
+  }
+
+  const imports = spec.pages
+    .map((p) => {
+      const safeName = dartIdentifierFromKey(p.key);
+      return `import 'pages/${safeName}.dart';`;
+    })
+    .join("\n");
+
+  const routes = spec.pages
+    .map((p) => {
+      const safeName = dartIdentifierFromKey(p.key);
+      const className = pageClassName(p);
+      return `'/${safeName}': (context) => ${className}(),`;
+    })
+    .join("\n        ");
+
+  const initialRoute = firstPage ? `/${dartIdentifierFromKey(firstPage.key)}` : "/";
+
+  files["lib/main.dart"] = [
+    "import 'package:flutter/material.dart';",
+    ...(includeSupabase ? ["import 'package:supabase_flutter/supabase_flutter.dart';"] : []),
+    imports,
+    "",
+    "void main() async {",
+    "  WidgetsFlutterBinding.ensureInitialized();",
+    ...(includeSupabase ? [
+      "  await Supabase.initialize(",
+      `    url: const String.fromEnvironment('SUPABASE_URL', defaultValue: 'YOUR_SUPABASE_URL'),`,
+      `    anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: 'YOUR_SUPABASE_ANON_KEY'),`,
+      "  );",
+    ] : []),
+    "  runApp(const WiraflowApp());",
+    "}",
+    "",
+    "class WiraflowApp extends StatelessWidget {",
+    "  const WiraflowApp({super.key});",
+    "",
+    "  @override",
+    "  Widget build(BuildContext context) {",
+    "    return MaterialApp(",
+    "      debugShowCheckedModeBanner: false,",
+    `      title: '${String(spec.appName || "Wiraflow App").replace(/'/g, "\\'")}',`,
+    "      theme: ThemeData(",
+    "        useMaterial3: true,",
+    `        colorSchemeSeed: const Color(${primaryColorSeed(spec)}),`,
+    "        brightness: Brightness.dark,",
+    "      ),",
+    `      initialRoute: '${initialRoute}',`,
+    "      routes: {",
+    `        ${routes}`,
+    "      },",
+    "    );",
+    "  }",
+    "}",
+    "",
+  ].join("\n");
+
+  files["pubspec.yaml"] = [
+    "name: wiraflow_export",
+    "description: Exported from Wiraflow",
+    "publish_to: 'none'",
+    "",
+    "version: 0.1.0+1",
+    "",
+    "environment:",
+    "  sdk: '>=3.0.0 <4.0.0'",
+    "",
+    "dependencies:",
+    "  flutter:",
+    "    sdk: flutter",
+    ...(includeSupabase ? ["  supabase_flutter: ^2.5.4"] : []),
+    ...(usesFlChart ? ["  fl_chart: ^0.68.0"] : []),
+    "",
+    "dev_dependencies:",
+    "  flutter_test:",
+    "    sdk: flutter",
+    "",
+    "flutter:",
+    "  uses-material-design: true",
+    "",
+  ].join("\n");
+
+  files["analysis_options.yaml"] = [
+    "analyzer:",
+    "  errors:",
+    "    unused_import: ignore",
+    "    unused_local_variable: ignore",
+    "",
+    "linter:",
+    "  rules:",
+    "    prefer_const_constructors: false",
+    "    prefer_const_literals_to_create_immutables: false",
+    "    avoid_print: false",
+    "",
+  ].join("\n");
+
+  files["test/widget_test.dart"] = [
+    "import 'package:flutter/material.dart';",
+    "import 'package:flutter_test/flutter_test.dart';",
+    "import 'package:wiraflow_export/main.dart';",
+    "",
+    "void main() {",
+    "  testWidgets('generated app launches', (tester) async {",
+    "    await tester.pumpWidget(const WiraflowApp());",
+    "    expect(find.byType(MaterialApp), findsOneWidget);",
+    "  });",
+    "}",
+    "",
+  ].join("\n");
+
+  files["README.md"] = [
+    "# Wiraflow Export",
+    "",
+    "This folder was generated by Wiraflow.",
+    "",
+    "## Quick start",
+    "1) `flutter create .` (or move files into an existing Flutter project)",
+    "2) Replace generated `lib/main.dart` and add `lib/pages/*`",
+    "3) Run `flutter pub get`",
+    "4) Run `flutter run`",
+    "",
+  ].join("\n");
+
+  return files;
+}
+

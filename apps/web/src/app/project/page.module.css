@@ -1,0 +1,178 @@
+.workspace {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg-app);
+}
+
+/* Center & Right Column */
+.editorContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  position: relative;
+  min-width: 400px;
+}
+
+/* Main Content Area */
+.mainArea {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.canvas {
+  flex: 1;
+  overflow: hidden;
+  background: var(--bg-app);
+  position: relative;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollable canvas body (below sticky toolbar) */
+.canvasBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.viewportToolbar {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: color-mix(in srgb, var(--bg-app) 78%, transparent);
+  border-bottom: 1px solid var(--border-subtle);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.viewportToolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.viewportMeta {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.viewportToolbarCenter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none; /* hide scrollbars */
+  -ms-overflow-style: none;
+}
+.viewportToolbarCenter::-webkit-scrollbar {
+  display: none;
+}
+
+.viewportToolbarRight {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+}
+
+.segBtn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.segBtnActive {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.iconBtnCompact {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+/* Subtle grid background on canvas */
+.canvas::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.rightPanel {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-surface) 95%, white 5%);
+  backdrop-filter: blur(20px);
+  position: relative;
+  z-index: 100;
+  height: 100%;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: -4px 0 30px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 1200px) {
+  .rightPanel {
+    position: absolute !important;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 200;
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.6);
+    background: var(--bg-surface-elevated);
+  }
+}

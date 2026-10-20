@@ -1,0 +1,186 @@
+.sidebar {
+  width: 260px;
+  height: 100%;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  color: var(--text-primary);
+  overflow: hidden;
+  z-index: 100;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1200px) {
+  .sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 150;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.4);
+    border-right: 1px solid var(--border-subtle);
+  }
+}
+
+.topNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+
+.navIcon {
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+  padding: 8px 16px;
+  border-radius: 8px;
+}
+
+.navIcon:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-elevated);
+}
+
+.activeNav {
+  color: var(--accent-cyber, #22D3EE);
+  background: var(--bg-surface-elevated);
+  box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.2);
+}
+
+.scrollArea {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.count {
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  padding: 0 8px;
+}
+
+.frameItem {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  gap: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background 0.1s;
+}
+
+.frameItem:hover {
+  background: var(--bg-surface-elevated);
+}
+
+.activeFrame {
+  background: var(--bg-surface-elevated);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.frameIcon {
+  color: var(--text-muted);
+}
+
+.frameLabel {
+  font-size: 13px;
+  flex: 1;
+}
+
+.deleteIcon {
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.frameItem:hover .deleteIcon {
+  opacity: 1;
+}
+
+.deleteIcon:hover {
+  color: #ef4444;
+}
+
+.separator {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 8px 0;
+}
+
+.layersList {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.layerItem {
+  display: flex;
+  align-items: center;
+  padding: 6px 16px;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background 0.1s;
+  font-size: 13px;
+}
+
+.layerItem:hover {
+  background: var(--bg-surface-elevated);
+}
+
+.layerItem.selected {
+  background: var(--accent-primary-glow);
+  color: var(--accent-primary);
+}
+
+.collapseIcon {
+  color: var(--text-muted);
+}
+
+.widgetIcon {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.layerLabel {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

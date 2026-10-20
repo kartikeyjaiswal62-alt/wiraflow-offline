@@ -1,0 +1,740 @@
+.canvasContainer {
+  width: 100%;
+  min-height: 100%;
+  padding: 18px 24px 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  overflow: visible;
+  position: relative;
+}
+
+.canvasContainerSide {
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  height: 100%;
+}
+
+.canvasContainerSide .previewArea {
+  width: auto;
+  flex: 1;
+}
+
+
+.embeddedContainer {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+/* Device shell (style variants below) */
+.deviceFrame {
+  width: var(--device-frame-w, 400px);
+  height: var(--device-frame-h, 850px);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  border-radius: var(--frame-radius, 56px);
+  box-shadow: none;
+}
+
+/* Full device chrome (bezel + notch) */
+.deviceFrameBezel {
+  /* iPhone-like shell: thin bezel, large corner radius */
+  padding: var(--bezel-pad, 10px);
+  background: linear-gradient(145deg, rgba(20, 20, 22, 0.92), rgba(8, 8, 10, 0.92));
+  border: none;
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.62),
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.deviceFrameBezel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  /* Bezel shine / specular highlights */
+  background:
+    linear-gradient(140deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 38%),
+    linear-gradient(320deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0) 46%),
+    radial-gradient(120% 140% at 15% 10%, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0) 55%);
+  opacity: 0.75;
+}
+
+.deviceFrameBezel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  /* Subtle rim + depth without thick borders */
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.10),
+    inset 0 -18px 36px rgba(0, 0, 0, 0.38),
+    inset 0 18px 30px rgba(255, 255, 255, 0.02);
+  opacity: 0.9;
+}
+
+/* Screen-only preview (no device chrome) */
+.deviceFrameClean {
+  background: transparent;
+  border: none;
+  border-radius: var(--frame-radius, 56px);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  outline: none;
+}
+
+.deviceFrameClean::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(140deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 36%),
+    radial-gradient(140% 120% at 20% 0%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 60%);
+  mix-blend-mode: screen;
+  opacity: 0.45;
+}
+
+@media (max-width: 900px) {
+  .canvasContainer {
+    padding: 16px;
+  }
+}
+
+.viewportControls {
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 16px;
+  background: rgba(120, 120, 120, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  max-width: min(860px, 100%);
+  flex-wrap: nowrap;
+  justify-content: center;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.viewportControlsSide {
+  flex-direction: column;
+  width: auto;
+  height: auto;
+  max-height: calc(100vh - 48px);
+  padding: 12px 8px;
+  position: sticky;
+  top: 12px;
+  margin: 12px;
+  align-self: flex-start;
+  flex-shrink: 0;
+}
+
+.viewportControlsSide .controlsGroup {
+  flex-direction: column;
+}
+
+.viewportControlsSide .controlsDivider {
+  width: 20px;
+  height: 1px;
+}
+
+.viewportControlsSide .deviceSelect {
+  width: 40px;
+  padding: 0;
+  text-align: center;
+}
+
+
+.viewportControls::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.controlsGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.controlsDivider {
+  width: 1px;
+  height: 16px;
+  background: rgba(150, 150, 150, 0.2);
+  flex: 0 0 auto;
+}
+
+.deviceSelect {
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 0 10px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deviceSelect:hover {
+  background: rgba(120, 120, 120, 0.15);
+}
+
+.deviceSelect option {
+  color: var(--text-primary);
+  background: var(--bg-surface);
+}
+
+.controlBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.controlTextBtn {
+  width: auto;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.controlBtn:hover, .controlTextBtn:hover {
+  background: rgba(120, 120, 120, 0.15);
+}
+
+.controlBtnActive {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: var(--accent-primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.zoomLabel {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  padding: 0 6px;
+  user-select: none;
+}
+
+.canvasScreen {
+  width: min(520px, 100%);
+  height: 100%;
+  min-height: 620px;
+  border-radius: 24px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-app);
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+}
+
+.freeScreen {
+  width: var(--device-frame-w, 390px);
+  height: var(--device-frame-h, 844px);
+  background: transparent;
+  border: none;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.previewArea {
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  position: relative;
+  overflow: hidden;
+}
+
+.panSurface {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.panScene {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate3d(calc(-50% + var(--pan-x, 0px)), calc(-50% + var(--pan-y, 0px)), 0);
+  will-change: transform;
+}
+
+.panSurfaceGrab {
+  cursor: grab;
+}
+
+.panSurfaceGrabbing {
+  cursor: grabbing;
+}
+
+.previewStage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.previewScale {
+  transform-origin: center;
+  will-change: transform;
+}
+
+.fillSurface {
+  width: 100%;
+  min-height: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.fillContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.notch {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 25px;
+  background: var(--bg-surface-elevated);
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.dynamicIsland {
+  position: absolute;
+  top: var(--island-top, 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: var(--island-w, 124px);
+  height: var(--island-h, 34px);
+  border-radius: var(--island-radius, 18px);
+  /* Real iPhone look: near-black pill that reads well on light UIs too */
+  background: linear-gradient(180deg, rgba(22, 22, 24, 0.98), rgba(0, 0, 0, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.80);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  pointer-events: none;
+  isolation: isolate;
+}
+
+.dynamicIsland::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: calc(var(--island-radius, 18px) - 1px);
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0) 42%);
+  opacity: 0.28;
+  mix-blend-mode: screen;
+}
+
+.dynamicIslandCamera {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.96) 70%);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.05),
+    0 0 0 1px rgba(0, 0, 0, 0.35);
+  margin-left: var(--island-camera-offset, 44px);
+}
+
+.camera {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #111;
+  box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.1);
+}
+
+.screen {
+  flex: 1;
+  background: #000;
+  width: 100%;
+  border-radius: var(--screen-radius, 44px);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  color: #F5F5F7;
+  font-family: inherit;
+  isolation: isolate;
+}
+
+.screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 20;
+  /* Screen glass sheen (subtle, works on light + dark UIs) */
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0) 42%),
+    radial-gradient(140% 120% at 20% 0%, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0) 58%);
+  mix-blend-mode: screen;
+  opacity: calc(0.55 * var(--glass-shine, 1));
+}
+
+.screenScroll {
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  scrollbar-color: transparent transparent;
+  scrollbar-width: none;
+  /* Hide scrollbar for native app feel */
+  -ms-overflow-style: none; /* IE and Edge */
+  position: relative;
+  z-index: 10;
+}
+
+.safeArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  padding-top: calc(var(--safe-top, 0px) + var(--screen-pad, 16px));
+  padding-right: calc(var(--safe-right, 0px) + var(--screen-pad, 16px));
+  padding-bottom: calc(var(--safe-bottom, 0px) + var(--screen-pad, 16px));
+  padding-left: calc(var(--safe-left, 0px) + var(--screen-pad, 16px));
+}
+
+.screenScroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.lottiePulse {
+  animation: lottie-pulse 2s infinite ease-in-out;
+}
+
+@keyframes lottie-pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 10px var(--accent-primary)); }
+  100% { transform: scale(1); opacity: 0.8; }
+}
+
+.shimmerEffect {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.shimmerEffect::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+  animation: shimmer-swipe 2s infinite;
+}
+
+@keyframes shimmer-swipe {
+  100% { transform: translateX(100%); }
+}
+
+.emptyScreen {
+  color: #666;
+  text-align: center;
+  font-size: 14px;
+  margin-top: 50px;
+}
+
+/* Node Outline for Selection */
+.widgetNode {
+  outline: 1px solid transparent;
+  outline-offset: 2px;
+  border-radius: 14px;
+  transition:
+    outline-color 140ms cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 140ms cubic-bezier(0.2, 0, 0, 1),
+    background-color 140ms cubic-bezier(0.2, 0, 0, 1),
+    transform 140ms cubic-bezier(0.2, 0, 0, 1);
+  cursor: pointer;
+}
+
+/* Highlight only the deepest hovered node (avoid parent/root highlighting). */
+.widgetNode:not(.selectedNode):hover:not(:has(.widgetNode:hover)) {
+  outline-color: rgba(34, 211, 238, 0.34);
+  box-shadow:
+    0 0 0 2px rgba(34, 211, 238, 0.12),
+    0 10px 28px rgba(0, 0, 0, 0.35);
+  background-color: rgba(34, 211, 238, 0.025);
+  transform: translateY(-1px);
+}
+
+.hoverLabel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate3d(var(--x, 0px), var(--y, 0px), 0);
+  max-width: min(360px, 70vw);
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
+  z-index: 120;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hoverLabelKey {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 11px;
+  vertical-align: middle;
+}
+
+.selectedNode {
+  outline: 2px dashed var(--accent-primary) !important;
+  outline-offset: 2px;
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+/* Layout Mappings */
+
+.containerBox {
+  background: var(--bg-surface-elevated);
+  border-radius: 24px;
+  padding: 24px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.logoRadial {
+  width: 64px;
+  height: 64px;
+  border-radius: 24px;
+  background: radial-gradient(circle at center, var(--text-primary) 0%, var(--bg-surface-elevated) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  margin-bottom: 8px;
+}
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-height: 20px;
+  border: 1px solid transparent; /* Allows outline to catch early */
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+}
+
+/* Text */
+.text {
+  text-align: left;
+  width: 100%;
+}
+.text h2 {
+  font-size: 26px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+.text span {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Specific formatting based on mock keys */
+:global(#widget-node-w-forgot-txt) span, 
+div:nth-child(3) > span { /* Very rough selector if keys fail */
+  font-size: 11px;
+  font-weight: 700;
+  color: #FB923C;
+  text-align: right;
+  display: block;
+}
+
+/* Inputs */
+.inputContainer {
+  width: 100%;
+}
+
+.input {
+  width: 100%;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-primary);
+  padding: 14px 16px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* Buttons */
+.button {
+  width: 100%;
+  background: var(--text-primary);
+  color: var(--bg-app);
+  border: none;
+  border-radius: 9999px;
+  padding: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  transition: opacity 0.2s;
+  box-sizing: border-box;
+}
+
+.button:hover {
+  opacity: 0.9;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+  cursor: pointer;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.triggerOverlay {
+  position: absolute;
+  bottom: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent-primary);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.triggerOverlay:hover {
+  background: #2563eb;
+}
+
+.box {
+  padding: 10px;
+  border: 1px dashed var(--border-subtle);
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Interactive Mode - Hide dev simulation markers */
+.interactive .widgetNode:hover {
+  outline: none !important;
+}
+
+.interactive .widgetNode {
+  cursor: default;
+}
+
+.interactive .widgetNode[onClick],
+.interactive .widgetNode[onPointerDown] {
+  cursor: pointer;
+}

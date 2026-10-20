@@ -1,0 +1,72 @@
+.appContainer {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Background Ambient Glows */
+.ambientGlowPrimary {
+  position: absolute;
+  top: -20vh;
+  left: -10vw;
+  width: 50vw;
+  height: 50vh;
+  background: radial-gradient(circle, var(--accent-primary-glow) 0%, transparent 70%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.ambientGlowSecondary {
+  position: absolute;
+  bottom: -20vh;
+  right: -10vw;
+  width: 60vw;
+  height: 60vh;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Base Layout Sections */
+.sidebar {
+  width: 80px;
+  height: 100%;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0;
+  gap: 32px;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+}
+
+.mainCanvas {
+  flex: 1;
+  height: 100%;
+  position: relative;
+  z-index: 5;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.inspectorPanel {
+  width: 320px;
+  height: 100%;
+  border-left: 1px solid var(--border-subtle);
+  background: var(--bg-surface-elevated);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}

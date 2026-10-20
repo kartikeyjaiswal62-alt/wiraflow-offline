@@ -1,0 +1,217 @@
+/* ------------------------------------------------------------ */
+/* WiringGraph — Interactive Node Graph                         */
+/* ------------------------------------------------------------ */
+
+.wiringGraph {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.03) 0%, transparent 70%),
+    var(--bg-main);
+}
+
+/* SVG canvas */
+.graphSvg {
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+.graphSvg:active {
+  cursor: grabbing;
+}
+
+/* Grid dots (background) */
+.gridPattern {
+  fill: rgba(255, 255, 255, 0.04);
+}
+
+/* Nodes */
+.node {
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+
+.node:hover {
+  filter: brightness(1.15) drop-shadow(0 0 12px rgba(255, 255, 255, 0.1));
+}
+
+.nodeRect {
+  rx: 12;
+  ry: 12;
+  stroke-width: 1.5;
+  transition: all 0.2s;
+}
+
+.nodeRectPage {
+  composes: nodeRect;
+  fill: rgba(59, 130, 246, 0.08);
+  stroke: rgba(59, 130, 246, 0.35);
+}
+
+.nodeRectWidget {
+  composes: nodeRect;
+  fill: rgba(168, 85, 247, 0.08);
+  stroke: rgba(168, 85, 247, 0.35);
+}
+
+.nodeRectTable {
+  composes: nodeRect;
+  fill: rgba(62, 207, 142, 0.08);
+  stroke: rgba(62, 207, 142, 0.35);
+}
+
+.nodeRectSelected {
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+.nodeIcon {
+  font-size: 14px;
+  dominant-baseline: middle;
+  text-anchor: middle;
+}
+
+.nodeLabel {
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--text-primary);
+  dominant-baseline: middle;
+}
+
+.nodeType {
+  font-size: 9px;
+  font-weight: 600;
+  fill: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  dominant-baseline: middle;
+}
+
+/* Edges */
+.edge {
+  fill: none;
+  stroke-width: 1.5;
+  opacity: 0.5;
+  transition: opacity 0.2s, stroke-width 0.2s;
+}
+
+.edgeHighlight {
+  composes: edge;
+  opacity: 1;
+  stroke-width: 2.5;
+}
+
+.edgeRead {
+  stroke: #3ECF8E;
+  stroke-dasharray: 6 4;
+}
+
+.edgeMutation {
+  stroke: #A855F7;
+}
+
+.edgeNavigation {
+  stroke: #3B82F6;
+  stroke-dasharray: 4 3;
+}
+
+/* Edge labels */
+.edgeLabel {
+  font-size: 9px;
+  font-weight: 600;
+  fill: var(--text-muted);
+  dominant-baseline: middle;
+  text-anchor: middle;
+}
+
+/* Legend */
+.legend {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  gap: 16px;
+  padding: 10px 16px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.legendDotPage { composes: legendDot; background: #3B82F6; }
+.legendDotWidget { composes: legendDot; background: #A855F7; }
+.legendDotTable { composes: legendDot; background: #3ECF8E; }
+
+.legendLine {
+  width: 16px;
+  height: 2px;
+}
+
+.legendLineRead { composes: legendLine; background: #3ECF8E; }
+.legendLineMutation { composes: legendLine; background: #A855F7; }
+.legendLineNav { composes: legendLine; background: #3B82F6; }
+
+/* Stats overlay */
+.statsOverlay {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.statPill {
+  padding: 6px 14px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statPillBlue { composes: statPill; color: #3B82F6; }
+.statPillPurple { composes: statPill; color: #A855F7; }
+.statPillGreen { composes: statPill; color: #3ECF8E; }
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  pointer-events: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  max-width: 260px;
+}
+
+.tooltipTitle {
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}

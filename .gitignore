@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+dist/
+.turbo/
+*.tsbuildinfo
+.run/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ── SECRETS — NEVER COMMIT THESE ─────────────────────────────
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.staging
+*.secret
+*.pem
+*.key
+*.p12
+*.jks
+google-services.json
+GoogleService-Info.plist
+keystore.properties
+upload-keystore.jks
+release.keystore
+
+# API Keys / tokens embedded in config files
+supabase/.temp/
+**/supabase/config.toml.local
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Next.js
+.next/
+out/
+build/
+apps/web/graphify-out/
+
+# Editor
+.vscode/settings.json
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# OS
+Thumbs.db

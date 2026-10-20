@@ -1,0 +1,28 @@
+.card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition-smooth);
+}
+
+.interactive:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-focus);
+}
+
+/* Optional glowing effect for selected items */
+.active {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 1px var(--accent-primary-glow), 0 8px 24px rgba(0,0,0,0.4);
+}
+
+/* Optional cyber glow for AI inference nodes */
+.cyber {
+  border-color: var(--accent-cyber);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.2), 0 8px 24px rgba(0,0,0,0.4);
+}

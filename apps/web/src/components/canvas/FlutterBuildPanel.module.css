@@ -1,0 +1,17 @@
+.panel { padding: 18px; border-top: 1px solid rgba(255,255,255,.1); background: #18191d; color: #eee; font-family: Inter, sans-serif; }
+.header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.header h3 { margin: 0 0 5px; font-size: 15px; }
+.header p, .notice { margin: 0; color: #a1a1aa; font-size: 12px; }
+.header button { flex: 0 0 auto; border: 1px solid #7067ee; border-radius: 8px; padding: 9px 13px; background: #5149c9; color: white; font: inherit; font-size: 12px; cursor: pointer; }
+.header button:disabled { opacity: .5; cursor: not-allowed; }
+.notice { margin-top: 12px; }
+.timeline { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 10px; }
+.timeline li { display: flex; gap: 10px; align-items: flex-start; }
+.dot { width: 9px; height: 9px; margin-top: 4px; border-radius: 50%; background: #777; flex: 0 0 auto; }
+.success .dot { background: #3fcb84; }.failed .dot { background: #f07178; }.running .dot { background: #f2bf5e; }
+.eventBody { min-width: 0; flex: 1; font-size: 12px; }
+.eventTitle { display: flex; gap: 8px; align-items: center; }.eventTitle span { color: #aaa; font-size: 10px; text-transform: uppercase; }
+.eventBody p { margin: 4px 0; color: #aaa; }.eventBody details { margin-top: 5px; color: #aaa; }.eventBody pre { max-height: 220px; overflow: auto; white-space: pre-wrap; padding: 10px; background: #101114; border-radius: 6px; color: #d7d7d7; }
+.error { padding: 10px 12px; border: 1px solid rgba(240,113,120,.4); border-radius: 8px; background: rgba(240,113,120,.08); color: #ffb8bc; font-size: 12px; }
+.metrics { margin-top: 18px; padding: 13px; border: 1px solid #33353d; border-radius: 9px; display: grid; gap: 7px; font-size: 12px; }.metrics > span { color: #9a9ba4; font-size: 11px; }.metricRow { margin-top: 7px; padding-top: 10px; border-top: 1px solid #303139; display: grid; grid-template-columns: minmax(120px, 1.2fr) 1fr 1fr; gap: 12px; align-items: center; }.metricRow b { overflow-wrap: anywhere; }.metricRow small { color: #9a9ba4; font-weight: 400; }.metricRow label { display: grid; grid-template-columns: 1fr auto; gap: 6px; color: #bfc0c6; font-size: 10px; }.metricRow label i { grid-column: 1 / -1; height: 5px; border-radius: 4px; background: #303139; overflow: hidden; }.metricRow label em { display: block; height: 100%; background: #756df2; border-radius: inherit; }
+.preview { margin-top: 18px; }.preview h4 { margin: 0 0 9px; font-size: 13px; }.preview iframe { width: 100%; min-height: 540px; border: 1px solid #393a42; border-radius: 9px; background: white; }
