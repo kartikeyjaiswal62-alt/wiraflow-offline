@@ -562,10 +562,6 @@ export function AIAssistantSidebar({
 
   const handleSend = async () => {
     if (!prompt.trim()) return;
-    if (aiProvider === "cloud" && !apiKey) {
-      setError("Add a cloud API key in Settings, or switch to local Ollama.");
-      return;
-    }
 
     setIsLoading(true);
     setError("");

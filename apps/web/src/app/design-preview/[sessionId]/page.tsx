@@ -166,7 +166,7 @@ export default function DesignPreviewPage({
 
   const handleRegenerate = async () => {
     const project = getProject(sessionId);
-    if (!project?.prompt || (aiProvider === "cloud" && !apiKey)) return;
+    if (!project?.prompt) return;
 
     const generatorAddendum = (project.promptLabGenerate || "").trim();
     const effectivePrompt =
@@ -175,7 +175,7 @@ export default function DesignPreviewPage({
         : project.prompt;
 
     setRegenerating(true);
-    const result = await generateDesignSpec({ prompt: effectivePrompt, apiKey, model, provider: aiProvider || "ollama", generationMode: "full" });
+    const result = await generateDesignSpec({ prompt: effectivePrompt, apiKey, model, provider: aiProvider || "cloud", generationMode: "full" });
     setRegenerating(false);
 
     if (result.success && result.spec) {

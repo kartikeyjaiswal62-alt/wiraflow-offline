@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { DEFAULT_OLLAMA_MODEL, getOllamaBaseUrl, ollamaUnavailableMessage } from "../../../lib/ollama-server";
+import { callGeminiWithFallback, getGeminiApiKey } from "../../../lib/gemini";
 
 export const runtime = "nodejs";
 
@@ -192,30 +193,31 @@ export async function POST(req: NextRequest) {
     if (!prompt?.trim()) {
       return NextResponse.json({ error: "No prompt provided." }, { status: 400 });
     }
-    if (provider !== "ollama" && !apiKey) {
-      return NextResponse.json({ error: "No API key provided." }, { status: 400 });
-    }
-
     const localMode = provider === "ollama";
     const localPageCount = generationMode === "full" ? 2 : 1;
-    if (imageDataUrl && !localMode) {
-      return NextResponse.json({ error: "Sketch input requires local Ollama." }, { status: 400 });
+    const effectiveApiKey = apiKey || getGeminiApiKey();
+
+    if (!localMode && !effectiveApiKey) {
+      return NextResponse.json({ error: "No API key configured for Cloud API." }, { status: 400 });
     }
+
     let imageBase64: string | undefined;
+    let imageMimeType: string = "image/png";
     if (imageDataUrl) {
       if (typeof imageDataUrl !== "string" || imageDataUrl.length > 6 * 1024 * 1024) {
         return NextResponse.json({ error: "Image is too large. Choose a smaller sketch image." }, { status: 413 });
       }
-      const match = /^data:image\/(?:jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(imageDataUrl);
+      const match = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(imageDataUrl);
       if (!match) return NextResponse.json({ error: "Sketch must be a PNG, JPEG, or WebP image." }, { status: 400 });
-      imageBase64 = match[1];
+      imageMimeType = match[1];
+      imageBase64 = match[2];
     }
 
     // Cloud-provider selection only needs the key and model when local mode is off.
-    const isGeminiKey = !localMode && apiKey.startsWith("AIza");
-    const isOpenAIKey = !localMode && apiKey.startsWith("sk-");
+    const isGeminiKey = !localMode && effectiveApiKey.startsWith("AIza");
+    const isOpenAIKey = !localMode && effectiveApiKey.startsWith("sk-");
     const isGeminiModel = !model || model.startsWith("gemini") || model.startsWith("models/gemini");
-    const isGemini = isGeminiKey || (!isOpenAIKey && !localMode && isGeminiModel);
+    const isGemini = isGeminiKey || (!isOpenAIKey && !localMode && isGeminiModel) || (!localMode && !isOpenAIKey);
 
     // Enhanced user prompt with explicit page count and quality requirements
     const enhancedUserPrompt = `Design a complete, premium, and deeply contextual mobile app for:
@@ -273,41 +275,30 @@ CRITICAL REQUIREMENTS:
       }
       result = data?.message?.content || "";
     } else if (isGemini) {
-      modelName = isGemini
-        ? (isGeminiModel ? (model || "gemini-2.0-flash") : "gemini-2.0-flash")
-        : (!model || isGeminiModel ? "gpt-4o" : model);
-      const cleanModelName = modelName.replace(/^models\//, "");
-      
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${cleanModelName}:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            systemInstruction: {
-              parts: [{ text: SYSTEM_PROMPT }]
-            },
-            contents: [
-              { role: "user", parts: [{ text: enhancedUserPrompt }] }
-            ],
-            generationConfig: {
-              temperature: 0.75,
-              maxOutputTokens: 32000,
-              responseMimeType: "application/json"
-            }
-          }),
-        }
-      );
-      
-      const data = await res.json();
-      if (!res.ok) {
-        return NextResponse.json(
-          { error: data?.error?.message || "Gemini REST API error" },
-          { status: 502 }
-        );
+      const parts: any[] = [];
+      if (imageBase64) {
+        parts.push({
+          inlineData: {
+            mimeType: imageMimeType,
+            data: imageBase64,
+          },
+        });
       }
-      
-      result = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      parts.push({ text: enhancedUserPrompt });
+
+      const geminiResult = await callGeminiWithFallback({
+        contents: { parts },
+        config: {
+          systemInstruction: SYSTEM_PROMPT,
+          temperature: 0.75,
+          responseMimeType: "application/json",
+        },
+        model,
+        customKey: effectiveApiKey,
+      });
+
+      result = geminiResult.text;
+      modelName = geminiResult.model;
     } else {
       modelName = !model || isGeminiModel ? "gpt-4o" : model;
       // OpenAI-compatible
@@ -317,7 +308,7 @@ CRITICAL REQUIREMENTS:
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${effectiveApiKey}`,
         },
         body: JSON.stringify({
           model: modelName,

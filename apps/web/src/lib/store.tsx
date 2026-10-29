@@ -25,8 +25,8 @@ const STORAGE_KEY = "wiraflow-store";
 
 const DEFAULT_STATE: StoreState = {
   apiKey: "",
-  model: "gemma4:e2b-it-q4_K_M",
-  aiProvider: "ollama",
+  model: "gemini-3.8-flash",
+  aiProvider: "cloud",
   projects: [],
 };
 
@@ -57,14 +57,23 @@ function loadState(): StoreState {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw) as Partial<StoreState>;
+    const provider = parsed.aiProvider || "cloud";
+    let model = parsed.model || DEFAULT_STATE.model;
+    if (provider === "cloud") {
+      if (!model || model.startsWith("gemma") || model.includes("2.0-flash") || model.includes("1.5")) {
+        model = "gemini-3.8-flash";
+      }
+    } else {
+      if (!model || model.startsWith("gemini")) {
+        model = "gemma4:e2b-it-q4_K_M";
+      }
+    }
+
     return {
       ...DEFAULT_STATE,
       ...parsed,
-      // Move the previous default to the smaller CPU-friendly model. Users who
-      // chose another Ollama tag keep their existing preference.
-      model: parsed.model === "gemma4:e4b-it-q4_K_M" ? DEFAULT_STATE.model : parsed.model || DEFAULT_STATE.model,
-      // Preserve the existing cloud setup for users upgrading from the API-key version.
-      aiProvider: parsed.aiProvider || (parsed.apiKey ? "cloud" : "ollama"),
+      aiProvider: provider,
+      model,
     };
   } catch {
     return DEFAULT_STATE;

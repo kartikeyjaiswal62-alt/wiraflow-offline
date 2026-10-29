@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { DEFAULT_OLLAMA_MODEL, getOllamaBaseUrl, ollamaUnavailableMessage } from "../../../lib/ollama-server";
+import { callGeminiWithFallback, GEMINI_MODEL, getGeminiApiKey } from "../../../lib/gemini";
 
 export const runtime = "nodejs";
 
@@ -176,24 +177,22 @@ export async function POST(req: NextRequest) {
     const allowedKeyList =
       Array.isArray(allowedKeys) && allowedKeys.length ? allowedKeys.slice(0, 60).map(String) : null;
 
-    if (provider !== "ollama" && !apiKey) return NextResponse.json({ error: "No API key provided." }, { status: 400 });
+    const localMode = provider === "ollama";
+    const effectiveApiKey = apiKey || getGeminiApiKey();
+
+    if (!localMode && !effectiveApiKey) return NextResponse.json({ error: "No API key provided." }, { status: 400 });
     if (!prompt?.trim()) return NextResponse.json({ error: "No prompt provided." }, { status: 400 });
     if (!designSpec) return NextResponse.json({ error: "No designSpec provided." }, { status: 400 });
 
-    const localMode = provider === "ollama";
-    const isGeminiKey = !localMode && apiKey.startsWith("AIza");
-    const isOpenAIKey = !localMode && apiKey.startsWith("sk-");
+    const isGeminiKey = !localMode && effectiveApiKey.startsWith("AIza");
+    const isOpenAIKey = !localMode && effectiveApiKey.startsWith("sk-");
     const isGeminiModel = !model || model.startsWith("gemini") || model.startsWith("models/gemini");
-    const isGemini = isGeminiKey || (!isOpenAIKey && isGeminiModel);
+    const isGemini = isGeminiKey || (!isOpenAIKey && isGeminiModel) || (!localMode && !isOpenAIKey);
     const modelName = localMode
       ? (typeof model === "string" && model.trim() ? model.trim() : DEFAULT_OLLAMA_MODEL)
       : isGemini
-      ? isGeminiModel
-        ? model || "gemini-2.0-flash"
-        : "gemini-2.0-flash"
-      : !model || isGeminiModel
-        ? "gpt-4o"
-        : model;
+      ? ((model && !model.includes("2.0-flash") && !model.includes("1.5")) ? model : GEMINI_MODEL)
+      : (!model || isGeminiModel ? "gpt-4o" : model);
 
     const agentPrompt = buildAgentPrompt({
       prompt,
@@ -231,32 +230,22 @@ export async function POST(req: NextRequest) {
       }
       result = data?.message?.content || "";
     } else if (isGemini) {
-      const cleanModelName = String(modelName).replace(/^models\//, "");
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${cleanModelName}:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: AGENT_SYSTEM_PROMPT }] },
-            contents: [{ role: "user", parts: [{ text: agentPrompt }] }],
-            generationConfig: { temperature: 0.15, maxOutputTokens: 2000 },
-          }),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) {
-        return NextResponse.json(
-          { error: data?.error?.message || "Gemini REST API error" },
-          { status: 502 }
-        );
-      }
-      result = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const res = await callGeminiWithFallback({
+        contents: agentPrompt,
+        config: {
+          systemInstruction: AGENT_SYSTEM_PROMPT,
+          temperature: 0.15,
+          responseMimeType: "application/json",
+        },
+        model: modelName,
+        customKey: apiKey,
+      });
+      result = res.text || "";
     } else {
       const usesMaxCompletionTokens = String(modelName).startsWith("gpt-5") || String(modelName).startsWith("o");
       const oaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${effectiveApiKey}` },
         body: JSON.stringify({
           model: modelName,
           messages: [

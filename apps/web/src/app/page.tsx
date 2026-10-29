@@ -53,7 +53,7 @@ export default function Home() {
             Your App Workspace
           </h1>
           <p className={styles.heroSubtitle}>
-            Describe a mobile app and draft its blueprint with local Ollama.
+            Describe a mobile app and draft its blueprint with Google Gemini Cloud API or local Ollama.
             Review the interactive design preview, then export Flutter source.
           </p>
         </div>
@@ -78,14 +78,11 @@ export default function Home() {
         </div>
       </div>
 
-      {/* API Warning */}
-      {aiProvider === "cloud" && !apiKey && (
-        <div className={styles.apiWarning}>
-          <AlertTriangle size={16} />
-          <span>No API key configured — AI design generation won't work until you add one.</span>
-          <Link href="/settings" className={styles.apiWarningLink}>
-            Configure →
-          </Link>
+      {aiProvider === "cloud" && (
+        <div className={styles.localModeBadge} style={{ borderColor: "rgba(59, 130, 246, 0.4)", background: "rgba(59, 130, 246, 0.08)" }}>
+          <Sparkles size={15} style={{ color: "#60a5fa" }} />
+          <span>Cloud Mode Active · Powered by Google Gemini API (gemini-3.8-flash)</span>
+          <Link href="/settings" className={styles.apiWarningLink}>AI settings</Link>
         </div>
       )}
 

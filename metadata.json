@@ -1,0 +1,7 @@
+{
+  "name": "Wiraflow",
+  "description": "AI-driven app assembly and debugging platform for FlutterFlow + Supabase.",
+  "permissions": [],
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

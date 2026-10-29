@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { callGeminiWithFallback, GEMINI_MODEL, getGeminiApiKey } from "../../../lib/gemini";
 
 /**
  * POST /api/edit-design
@@ -512,15 +513,18 @@ export async function POST(req: NextRequest) {
     }
 
     // Determine provider and model name securely
-    const isGeminiKey = apiKey.startsWith("AIza");
-    const isOpenAIKey = apiKey.startsWith("sk-");
+    const effectiveApiKey = apiKey || getGeminiApiKey();
+    if (!effectiveApiKey) {
+      return NextResponse.json({ error: "Missing API key for cloud editing." }, { status: 401 });
+    }
+
+    const isGeminiKey = effectiveApiKey.startsWith("AIza");
+    const isOpenAIKey = effectiveApiKey.startsWith("sk-");
     const isGeminiModel = !model || model.startsWith("gemini") || model.startsWith("models/gemini");
-    const isGemini = isGeminiKey || (!isOpenAIKey && isGeminiModel);
+    const isGemini = isGeminiKey || (!isOpenAIKey && isGeminiModel) || !isOpenAIKey;
     
-    // If it's a Gemini key but the user accidentally left the model as gpt-4o, correct it safely.
-    // If it's an OpenAI key but the user left the model as gemini-*, correct it safely.
     const modelName = isGemini
-      ? (isGeminiModel ? (model || "gemini-2.0-flash") : "gemini-2.0-flash")
+      ? ((model && !model.includes("2.0-flash") && !model.includes("1.5")) ? model : GEMINI_MODEL)
       : (!model || isGeminiModel ? "gpt-4o" : model);
 
     let result: string;
@@ -574,39 +578,17 @@ Include ONLY widgets you changed.
 If you cannot comply with the patch format, you MAY return the full updated design spec (appName/tagline/palette/fonts/pages).`;
 
     if (isGemini) {
-      // Direct REST API call (bypasses Genkit/Plugin issues with API key formats)
-      // Make sure we strip 'models/' prefix if it's there
-      const cleanModelName = modelName.replace(/^models\//, "");
-      
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${cleanModelName}:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            systemInstruction: {
-              parts: [{ text: EDIT_SYSTEM_PROMPT }]
-            },
-            contents: [
-              { role: "user", parts: [{ text: EDIT_PROMPT }] }
-            ],
-            generationConfig: {
-              temperature: 0.1,
-              maxOutputTokens: 2000
-            }
-          }),
-        }
-      );
-      
-      const data = await res.json();
-      if (!res.ok) {
-        return NextResponse.json(
-          { error: data?.error?.message || "Gemini REST API error" },
-          { status: 502 }
-        );
-      }
-      
-      result = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const res = await callGeminiWithFallback({
+        contents: EDIT_PROMPT,
+        config: {
+          systemInstruction: EDIT_SYSTEM_PROMPT,
+          temperature: 0.1,
+          responseMimeType: "application/json",
+        },
+        model: modelName,
+        customKey: apiKey,
+      });
+      result = res.text || "";
     } else {
       // OpenAI-compatible: call directly
       const usesMaxCompletionTokens =
@@ -615,7 +597,7 @@ If you cannot comply with the patch format, you MAY return the full updated desi
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${effectiveApiKey}`,
         },
         body: JSON.stringify({
           model: modelName,

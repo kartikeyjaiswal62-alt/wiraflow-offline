@@ -141,21 +141,22 @@ export async function generateDesignSpec(
 ): Promise<GenerateDesignResult> {
   const { prompt, apiKey, model, provider = "ollama", imageDataUrl, generationMode = "quick" } = request;
 
-  if (provider === "cloud" && !apiKey) {
-    return { success: false, error: "No API key configured. Go to Settings to add your Gemini API key." };
-  }
   if (!prompt.trim()) {
     return { success: false, error: "Please describe what you want to build." };
-  }
-  if (imageDataUrl && provider !== "ollama") {
-    return { success: false, error: "Sketch input currently requires local Ollama. Switch providers in Settings to continue." };
   }
 
   try {
     const res = await fetch("/api/generate-design", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, ...(provider === "cloud" ? { apiKey } : {}), model, provider, ...(imageDataUrl ? { imageDataUrl } : {}), generationMode }),
+      body: JSON.stringify({
+        prompt,
+        apiKey,
+        model: model || (provider === "cloud" ? "gemini-3.8-flash" : undefined),
+        provider,
+        ...(imageDataUrl ? { imageDataUrl } : {}),
+        generationMode,
+      }),
     });
 
     const data = await res.json();
@@ -173,9 +174,7 @@ export async function generateDesignSpec(
 // Generate random app ideas — for inspiration chips
 // ---------------------------------------------------------------------------
 
-export async function generateAppIdeas(apiKey: string, model?: string): Promise<string[]> {
-  if (!apiKey) return [];
-  
+export async function generateAppIdeas(apiKey?: string, model?: string): Promise<string[]> {
   const prompt = "Generate 5 diverse, creative, and modern mobile app ideas. Each idea should be a single, descriptive sentence (15-25 words). Examples: 'A freelance invoicing app with client management and payment tracking', 'A fitness tracking dashboard with workout logs and progress charts'. Return ONLY the 5 ideas separated by newlines.";
 
   try {
@@ -185,7 +184,7 @@ export async function generateAppIdeas(apiKey: string, model?: string): Promise<
       body: JSON.stringify({ 
         prompt, 
         apiKey, 
-        model: model || "gemini-2.0-flash",
+        model: model || "gemini-3.8-flash",
         temperature: 0.8
       }),
     });
@@ -202,25 +201,25 @@ export async function generateAppIdeas(apiKey: string, model?: string): Promise<
   }
 }
 
-
 // ---------------------------------------------------------------------------
-// API key test — supports both Gemini and OpenAI keys
+// API key / Cloud status test
 // ---------------------------------------------------------------------------
 
-export async function testApiKey(apiKey: string): Promise<{ success: boolean; error?: string }> {
-  if (!apiKey) return { success: false, error: "No API key provided." };
-
-  const isGemini = apiKey.startsWith("AIza");
-  const isOAI = apiKey.startsWith("sk-");
-
-  // Since we execute generation from Next.js server, making direct calls from the browser 
-  // (client-side) to test keys often triggers CORS blocks on free tier Google/OpenAI accounts. 
-  // Instead of throwing false-positive "Network errors", we validate format.
-  if (isGemini || isOAI) {
-    return { success: true };
+export async function testApiKey(apiKey?: string): Promise<{ success: boolean; error?: string; model?: string }> {
+  try {
+    const res = await fetch("/api/gemini/status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ apiKey }),
+    });
+    const data = await res.json();
+    if (res.ok && data.connected) {
+      return { success: true, model: data.model || "gemini-3.8-flash" };
+    }
+    return { success: false, error: data.error || "Could not connect to Gemini API." };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Network error testing Gemini API." };
   }
-
-  return { success: false, error: "Invalid API key format. Ensure it starts with AIza or sk-" };
 }
 
 // ---------------------------------------------------------------------------

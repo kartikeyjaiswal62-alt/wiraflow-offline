@@ -71,7 +71,6 @@ export default function NewProjectPage() {
   }, []);
 
   const loadIdeas = async () => {
-    if (aiProvider !== "cloud" || !apiKey) return;
     setRefreshing(true);
     try {
       const ideas = await generateAppIdeas(apiKey, model);
@@ -98,18 +97,13 @@ export default function NewProjectPage() {
 
     const useInstantDraft = generationMode === "quick" && !imageDataUrl;
 
-    if (!useInstantDraft && aiProvider === "cloud" && !apiKey) {
-      setError("Add a cloud provider API key in Settings, or switch to local Ollama.");
-      return;
-    }
-
     setError(null);
     setLoading(!useInstantDraft);
     setLoadingElapsed(0);
 
     const result = useInstantDraft
       ? { success: true, spec: createQuickDraft(prompt) }
-      : await generateDesignSpec({ prompt, apiKey, model, provider: aiProvider || "ollama", imageDataUrl, generationMode: "full" });
+      : await generateDesignSpec({ prompt, apiKey, model, provider: aiProvider || "cloud", imageDataUrl, generationMode: "full" });
 
     if (!result.success || !result.spec) {
       setError(result.error || "Generation failed. Please try again.");
@@ -158,7 +152,7 @@ export default function NewProjectPage() {
           <div className={styles.loadingSteps}>
             <div className={styles.loadingStepActive}>
               <div className={styles.loadingDotActive} />
-              {aiProvider === "cloud" ? "AI is creating your design..." : generationMode === "quick" && !imageDataUrl ? "Preparing your instant local draft..." : "Gemma is creating a compact two-page blueprint on this computer."}
+              {aiProvider === "cloud" ? "Google Gemini (gemini-3.8-flash) is creating your design..." : generationMode === "quick" && !imageDataUrl ? "Preparing your instant local draft..." : "Gemma is creating a compact two-page blueprint on this computer."}
             </div>
             {loadingElapsed >= 15 && (
               <div className={styles.loadingStep}>

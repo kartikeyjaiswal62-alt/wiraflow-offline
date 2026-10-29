@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { DEFAULT_OLLAMA_MODEL, getOllamaBaseUrl, ollamaUnavailableMessage } from "../../../lib/ollama-server";
+import { callGeminiWithFallback, GEMINI_MODEL, getGeminiApiKey } from "../../../lib/gemini";
 
 export const runtime = "nodejs";
 
@@ -49,19 +50,21 @@ export async function POST(req: NextRequest) {
     }
 
     const localMode = provider === "ollama";
-    if (!localMode && !apiKey) {
+    const effectiveApiKey = apiKey || getGeminiApiKey();
+
+    if (!localMode && !effectiveApiKey) {
       return NextResponse.json({ error: "Missing Google AI/Vertex API key" }, { status: 401 });
     }
 
-    const isGeminiKey = !localMode && apiKey.startsWith("AIza");
-    const isOpenAIKey = !localMode && apiKey.startsWith("sk-");
+    const isGeminiKey = !localMode && effectiveApiKey.startsWith("AIza");
+    const isOpenAIKey = !localMode && effectiveApiKey.startsWith("sk-");
     const isGeminiModel = !modelStr || modelStr.startsWith("gemini") || modelStr.startsWith("models/gemini");
-    const isGemini = isGeminiKey || (!isOpenAIKey && isGeminiModel);
+    const isGemini = isGeminiKey || (!isOpenAIKey && isGeminiModel) || (!localMode && !isOpenAIKey);
     
     const modelName = localMode
       ? (typeof modelStr === "string" && modelStr.trim() ? modelStr.trim() : DEFAULT_OLLAMA_MODEL)
       : isGemini
-      ? (isGeminiModel ? (modelStr || "gemini-2.0-flash") : "gemini-2.0-flash")
+      ? ((modelStr && !modelStr.includes("2.0-flash") && !modelStr.includes("1.5")) ? modelStr : GEMINI_MODEL)
       : (!modelStr || isGeminiModel ? "gpt-4o" : modelStr);
 
     const systemPrompt = `You are a Principal Database Architect for Wiraflow.
@@ -115,34 +118,21 @@ ${EXPECTED_SCHEMA_FORMAT}`;
       }
       result = data?.message?.content || "";
     } else if (isGemini) {
-      const cleanModelName = modelName.replace(/^models\//, "");
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${cleanModelName}:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: effectiveSystemPrompt }] },
-            contents: [
-              { role: "user", parts: [{ text: `Project Goal: ${prompt}\n\nDesignSpec UI:\n${JSON.stringify(spec, null, 2)}\n\nGenerate the complete relational Postgres Schema Plan as JSON.` }] }
-            ],
-            generationConfig: {
-              temperature: 0.1,
-              responseMimeType: "application/json"
-            }
-          }),
-        }
-      );
-      
-      const data = await res.json();
-      if (!res.ok) {
-        return NextResponse.json({ error: data?.error?.message || "Gemini REST API error" }, { status: 502 });
-      }
-      result = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const res = await callGeminiWithFallback({
+        contents: `Project Goal: ${prompt}\n\nDesignSpec UI:\n${JSON.stringify(spec, null, 2)}\n\nGenerate the complete relational Postgres Schema Plan as JSON.`,
+        config: {
+          systemInstruction: effectiveSystemPrompt,
+          temperature: 0.1,
+          responseMimeType: "application/json",
+        },
+        model: modelStr,
+        customKey: apiKey,
+      });
+      result = res.text || "";
     } else {
       const oaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${effectiveApiKey}` },
         body: JSON.stringify({
           model: modelName,
           messages: [

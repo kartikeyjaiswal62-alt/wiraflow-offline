@@ -1,21 +1,23 @@
 {
   "name": "wiraflow",
   "version": "0.1.0",
-  "packageManager": "npm@11.9.0",
   "private": true,
   "workspaces": [
     "packages/*",
     "apps/*"
   ],
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
-    "lint": "turbo lint",
+    "build": "npm run build --workspace=apps/web",
+    "dev": "npm run dev --workspace=apps/web",
+    "lint": "npm run lint --workspace=apps/web",
     "test": "turbo test",
     "typecheck": "turbo typecheck"
   },
   "devDependencies": {
     "turbo": "^2.5.0",
     "typescript": "^5.8.0"
+  },
+  "dependencies": {
+    "@google/genai": "^2.32.0"
   }
 }
